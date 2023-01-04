@@ -17,7 +17,7 @@ headers = {
 def handle_time(time: str) -> tuple[str, int]:
     ''' Change time format from 12-hour UTC-5 to 24-hour UTC+7 '''
 
-    if time in ["All Day", " "]:
+    if ":" not in time or time == " ":
         return time, 0
     elif str(time.split(":")[1][-2:]) == "am":
         return str(int(time.split(":")[0]) + 12) + ":" + str(time.split(":")[1][:-2]), 0
@@ -79,10 +79,14 @@ def scrapper(date: str) -> list():  # Date format: mmmd.yyyy
 start_date = dt.datetime(2022, 12, 31)
 final_data = []
 
-for i in range(1000):
+print("Start fetching data...")
+print("--------------------")
+for i in range(810):
     idate = start_date - dt.timedelta(days=i)
     final_data.extend(scrapper(idate))
-    print(idate.strftime("%b %d %Y") + " count:" + str(len(final_data)))
+    print(str(i + 1) + ". " + idate.strftime("%b %d %Y") + " count:" + str(len(final_data)))
+print("Successfully fetching data")
+print("--------------------")
 
 # Convert to pd.DataFrame with some cleaning
 header = ["date", "time", "currency", "impact", "event", "actual", "forecast", "previous"]
@@ -90,4 +94,7 @@ df = pd.DataFrame(final_data, columns=header)
 df["date"] = pd.to_datetime(df["date"], infer_datetime_format=True)
 df.sort_values(by=["date"], inplace=True, ascending=False)
 df.reset_index(inplace=True, drop=True)
-print(df)
+print(df.head())
+
+# Import to csv file
+df.to_csv("forex_factory.csv", sep=',', encoding='utf-8')
