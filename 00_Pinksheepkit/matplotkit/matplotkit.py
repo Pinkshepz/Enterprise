@@ -28,9 +28,9 @@ def alpha_format(function):
         ax.set_xlabel(x_label, **l_font)
         ax.set_ylabel(y_label, **l_font)
         for label in ax.get_xticklabels():
-            label.set_fontproperties(c_font)
+            label.set_fontproperties(**c_font)
         for label in ax.get_yticklabels():
-            label.set_fontproperties(c_font)
+            label.set_fontproperties(**c_font)
         plt.show()
         return fig, ax
     return wrapper
