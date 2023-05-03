@@ -3,13 +3,15 @@
     Functions:
     1. highlight_candlestick(img_list: list) -> dict
     2. interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> dict
-    3. calibrate_candlestick(candlestick: dict, **calibrated_candlestick_param) -> dict:
+    3. calibrate_candlestick(candlestick: dict, **calibrated_candlestick_param) -> dict
+    4. candlestick_reader(path_input: str, img_input: list, csv_input: str) -> dict
     
 """
 # Import libraries
 import numpy as np
 import pandas as pd
 import datetime as dt
+from PIL import Image
 
 def highlight_candlestick(img_list: list) -> dict:
     """Recognize bull and bear candlestick
@@ -54,7 +56,7 @@ def highlight_candlestick(img_list: list) -> dict:
     return CANDLESTICK_POLYMERASE
 
 
-def interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> dict:
+def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetime) -> dict:
     """Interpret candlestick pixel value (open, high, low, close)
     
     Parameters:
@@ -74,7 +76,6 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> 
 
     # Manage datetime
     # datetime(year, month, day, hour, minute, second)
-    initial_time = dt.datetime(2023, 4, 17, 17, 00, 00)
     delta_time = dt.timedelta(hours=1)
 
     def next_datetime(time, dt=delta_time):
@@ -95,8 +96,7 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> 
             CANDLESTICK[candle_time] = {"open": candlestick_polymerase[position][1],
                                         "high": candlestick_polymerase[position][1] + candlestick_polymerase[position][0],
                                         "low": candlestick_polymerase[position][1],
-                                        "close": candlestick_polymerase[position][1] + candlestick_polymerase[position][0],
-                                        "type": "bullish"}
+                                        "close": candlestick_polymerase[position][1] + candlestick_polymerase[position][0]}
             position += 1
             temp_high = CANDLESTICK[candle_time]["high"]
             temp_low = CANDLESTICK[candle_time]["low"]
@@ -113,8 +113,7 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> 
             CANDLESTICK[candle_time] = {"open": candlestick_polymerase[position][1] - candlestick_polymerase[position][0],
                                         "high": candlestick_polymerase[position][1] - candlestick_polymerase[position][0],
                                         "low": candlestick_polymerase[position][1],
-                                        "close": candlestick_polymerase[position][1],
-                                        "type": "bearish"}
+                                        "close": candlestick_polymerase[position][1]}
             position += 1
             temp_high = CANDLESTICK[candle_time]["high"]
             temp_low = CANDLESTICK[candle_time]["low"]
@@ -132,33 +131,27 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: tuple) -> 
     return CANDLESTICK
 
 
-def calibrate_candlestick(candlestick: dict,
-                          calibrated_candlestick_time: dt.datetime,
-                          calibrated_candlestick_open: float,
-                          calibrated_candlestick_high: float,
-                          calibrated_candlestick_low: float,
-                          calibrated_candlestick_close: float) -> dict:
-
-    # Calibrate candlestick price
-    c_date = dt.datetime(2023, 4, 19, 20, 00, 00)
-    c_open = 1980.20
-    c_high = 1992.90
-    c_low = 1978.90
-    c_close = 1990.55
-
+def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict) -> dict:
+    """Calibrate candlesitck value by calculate pixels to price"""
+    
     # Get non-calibrated price from candlestick
-    non_calibrated_value = candlestick[calibrated_candlestick_time]
-    candle_price_per_pixel = abs(calibrated_candlestick_open - calibrated_candlestick_close) / \
+    non_calibrated_value = candlestick[calibrated_candlestick_values["calibrated_time"].to_pydatetime()]
+    candle_price_per_pixel = abs(calibrated_candlestick_values["calibrated_open"] - calibrated_candlestick_values["calibrated_close"]) / \
         abs(non_calibrated_value["open"] - non_calibrated_value["close"])
-    wick_price_per_pixel = abs(calibrated_candlestick_high - calibrated_candlestick_low) / \
+    wick_price_per_pixel = abs(calibrated_candlestick_values["calibrated_high"] - calibrated_candlestick_values["calibrated_low"]) / \
         abs(non_calibrated_value["high"] - non_calibrated_value["low"])
     price_per_pixel = (candle_price_per_pixel + wick_price_per_pixel) / 2
+    
+    # Error should be less than 1%
+    error = abs(candle_price_per_pixel - wick_price_per_pixel) * 100 / candle_price_per_pixel
+    if error > 1:
+        return error, candle_price_per_pixel, wick_price_per_pixel
 
     # Calculate price
     def calibrate_price(pixel: float,
                         price_per_pixel=price_per_pixel,
                         exp_pixel=non_calibrated_value["open"],
-                        exp_price=calibrated_candlestick_open) -> float:
+                        exp_price=calibrated_candlestick_values["calibrated_open"]) -> float:
         """Calculate price from pixel"""
 
         return exp_price - ((exp_pixel-pixel)*price_per_pixel)
@@ -174,3 +167,57 @@ def calibrate_candlestick(candlestick: dict,
             calibrate_price(candlestick[candlestick_date]["close"]), 2)
 
     return candlestick
+
+def candlestick_reader(path_input: str, img_input: list, csv_input: str) -> dict:
+    """Read candlestick chart image and return csv file of price values"""
+    
+    print("----------INITIATING----------")
+    CSV = pd.read_csv(csv_input)
+    
+    # Check image - CSV compatibility
+    if (CSV.shape == 0) | (len(img_input) == 0):
+        print("Error: CSV or image input are empty")
+        return 1      
+    if CSV.shape == len(img_input):
+        print("Error: Image files number are not equal to csv data")
+        return 2
+    
+    print("There are {0} images to process".format(len(img_input)))
+    
+    # Format datetime CSV dataframe
+    CSV.iloc[:, 0] = pd.to_datetime(CSV.iloc[:, 0], format="%Y-%m-%d-%H") # First-time
+    CSV.iloc[:, 1] = pd.to_datetime(CSV.iloc[:, 1], format="%Y-%m-%d-%H") # Last-time
+    CSV.iloc[:, 2] = pd.to_datetime(CSV.iloc[:, 2], format="%Y-%m-%d-%H") # Calibrated-time
+
+    candlestick_dfs = {} # {img_file: pd.DataFrame}
+    
+    for count, img_file in enumerate(img_input):
+        print("Image {0} is processed".format(img_file) )
+        # load the image and convert into list
+        IMG = Image.open(str(path_input) + str(img_file))
+        IMG_LIST = np.asarray(IMG).tolist()
+
+        CANDLESTICK_POLYMERASE = highlight_candlestick(IMG_LIST)
+        CANDLESTICK = interpret_candlestick(CANDLESTICK_POLYMERASE, CSV.iloc[count, 0])
+        CALIBRATED_CANDLESTICK = calibrate_candlestick(CANDLESTICK, CSV.iloc[count, 2:])
+        # Check calibrate accuracy
+        if type(CALIBRATED_CANDLESTICK) != type({}):
+            print("Error: Fail to calibrate due to high error at {0}% > 0.5% at file {1}. Ref: {2}".format(
+                CALIBRATED_CANDLESTICK[0], img_file, CALIBRATED_CANDLESTICK[1:]))
+            return 3
+        # Check last candlestick
+        if list(CALIBRATED_CANDLESTICK.keys())[-1] != CSV.iloc[count, 1]:
+            print("Error: Last candlestick date ({0} to {1}) is not corresponded to CSV ({2})".format(
+                list(CALIBRATED_CANDLESTICK.keys())[0],
+                list(CALIBRATED_CANDLESTICK.keys())[-1],
+                CSV.iloc[count, 1]))
+            return 4
+        
+        # Convert into pd.DataFrame
+        DF_CANDLESTICK = pd.DataFrame(CALIBRATED_CANDLESTICK).transpose().reset_index().rename(columns = {'index':'time'})
+        
+        # Store in dictionary
+        candlestick_dfs[img_file] = DF_CANDLESTICK
+        print("{0} candlesticks is read from {1}".format(len(CANDLESTICK), img_file))
+    
+    return candlestick_dfs
