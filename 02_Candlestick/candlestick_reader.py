@@ -38,5 +38,20 @@ IMG_INPUT = next(os.walk(PATH_INPUT), (None, None, []))[2]
 # CSV Tabular
 CSV_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//candlestick_parameters.csv"
 # CSV_INPUT = "workspaces/Enterprise/02_Candlestick/input/candlestick_parameters.csv"
-    
-cf.candlestick_reader(PATH_INPUT, IMG_INPUT, CSV_INPUT)
+
+excluded_time = [
+    dt.datetime(year=2022, month=1, day=10, hour=5),
+    dt.datetime(year=2022, month=3, day=19, hour=4),
+    dt.datetime(year=2022, month=4, day=15, hour=16),
+    dt.datetime(year=2022, month=4, day=15, hour=17),
+    dt.datetime(year=2022, month=4, day=15, hour=18),
+    dt.datetime(year=2022, month=4, day=15, hour=19),
+    dt.datetime(year=2022, month=4, day=15, hour=21),
+    dt.datetime(year=2022, month=4, day=15, hour=22),
+    dt.datetime(year=2022, month=4, day=16, hour=0),
+    dt.datetime(year=2022, month=4, day=16, hour=1),
+    dt.datetime(year=2022, month=4, day=16, hour=3),
+    dt.datetime(year=2022, month=4, day=16, hour=4),
+]
+
+cf.candlestick_reader(PATH_INPUT, IMG_INPUT, CSV_INPUT, excluded_time)

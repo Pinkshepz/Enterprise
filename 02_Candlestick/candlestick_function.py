@@ -56,7 +56,7 @@ def highlight_candlestick(img_list: list) -> dict:
     return CANDLESTICK_POLYMERASE
 
 
-def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetime) -> dict:
+def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetime, excluded_time: list) -> dict:
     """Interpret candlestick pixel value (open, high, low, close)
     
     Parameters:
@@ -78,11 +78,13 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetim
     # datetime(year, month, day, hour, minute, second)
     delta_time = dt.timedelta(hours=1)
 
-    def next_datetime(time, dt=delta_time):
+    def next_datetime(time: dt.datetime, excluded_time=excluded_time, dt=delta_time):
         """Forward candlestick time"""
         while True:
             time += dt
-            # XAU market close -> SAT 05.00 - MON 04.00
+            if time in excluded_time:
+                time += dt
+            # XAU market close -> [SAT 05.00 - MON 04.00]
             if (time.weekday() in [1, 2, 3, 4]) | ((time.weekday() == 5) & (time.hour < 5)) | ((time.weekday() == 0) & (time.hour > 4)):
                 break
         return time
@@ -145,7 +147,7 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
     # Error should be less than 1%
     error = abs(candle_price_per_pixel - wick_price_per_pixel) * 100 / candle_price_per_pixel
     if error > 1:
-        return error, candle_price_per_pixel, wick_price_per_pixel
+        return [error, candle_price_per_pixel, wick_price_per_pixel, candlestick]
 
     # Calculate price
     def calibrate_price(pixel: float,
@@ -168,7 +170,7 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
 
     return candlestick
 
-def candlestick_reader(path_input: str, img_input: list, csv_input: str) -> dict:
+def candlestick_reader(path_input: str, img_input: list, csv_input: str, excluded_time: list) -> dict:
     """Read candlestick chart image and return csv file of price values"""
     
     print("----------INITIATING----------")
@@ -198,19 +200,20 @@ def candlestick_reader(path_input: str, img_input: list, csv_input: str) -> dict
         IMG_LIST = np.asarray(IMG).tolist()
 
         CANDLESTICK_POLYMERASE = highlight_candlestick(IMG_LIST)
-        CANDLESTICK = interpret_candlestick(CANDLESTICK_POLYMERASE, CSV.iloc[count, 0])
+        CANDLESTICK = interpret_candlestick(CANDLESTICK_POLYMERASE, CSV.iloc[count, 0], excluded_time)
+        # Check last candlestick
+        if list(CANDLESTICK.keys())[-1] != CSV.iloc[count, 1]:
+            print("Error: Last candlestick date ({0} to {1}) is not corresponded to CSV ({2})".format(
+                list(CANDLESTICK.keys())[0],
+                list(CANDLESTICK.keys())[-1],
+                CSV.iloc[count, 1]))
+            return 3
         CALIBRATED_CANDLESTICK = calibrate_candlestick(CANDLESTICK, CSV.iloc[count, 2:])
         # Check calibrate accuracy
         if type(CALIBRATED_CANDLESTICK) != type({}):
             print("Error: Fail to calibrate due to high error at {0}% > 0.5% at file {1}. Ref: {2}".format(
                 CALIBRATED_CANDLESTICK[0], img_file, CALIBRATED_CANDLESTICK[1:]))
-            return 3
-        # Check last candlestick
-        if list(CALIBRATED_CANDLESTICK.keys())[-1] != CSV.iloc[count, 1]:
-            print("Error: Last candlestick date ({0} to {1}) is not corresponded to CSV ({2})".format(
-                list(CALIBRATED_CANDLESTICK.keys())[0],
-                list(CALIBRATED_CANDLESTICK.keys())[-1],
-                CSV.iloc[count, 1]))
+            print(CALIBRATED_CANDLESTICK)
             return 4
         
         # Convert into pd.DataFrame
