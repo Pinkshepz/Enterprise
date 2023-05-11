@@ -23,21 +23,23 @@
 import os
 
 # Import datasci libraries
+import datetime as dt
 import numpy as np
 import pandas as pd
 from PIL import Image
-import datetime as dt
 
 import candlestick_function as cf
 
 # Read input file
 # Image
-PATH_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//image//"
-# PATH_INPUT = "/workspaces/Enterprise/02_Candlestick/input/image/"
-IMG_INPUT = next(os.walk(PATH_INPUT), (None, None, []))[2]
+# PATH_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//image//"
+PATH_INPUT = "/workspaces/Enterprise/02_Candlestick/input/image/"
+IMG_INPUT = sorted(next(os.walk(PATH_INPUT), (None, None, []))[2])
 # CSV Tabular
-CSV_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//candlestick_parameters.csv"
-# CSV_INPUT = "workspaces/Enterprise/02_Candlestick/input/candlestick_parameters.csv"
+# CSV_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//candlestick_parameters.csv"
+CSV_INPUT = "/workspaces/Enterprise/02_Candlestick/input/candlestick_parameters.csv"
+
+PATH_OUTPUT = "/workspaces/Enterprise/02_Candlestick/output/"
 
 excluded_time = [
     dt.datetime(year=2022, month=1, day=10, hour=5),
@@ -54,4 +56,14 @@ excluded_time = [
     dt.datetime(year=2022, month=4, day=16, hour=4),
 ]
 
-cf.candlestick_reader(PATH_INPUT, IMG_INPUT, CSV_INPUT, excluded_time)
+BATCH_SIZE = 5
+BATCH_NO = 0
+INITIAL = 0 + (BATCH_SIZE * BATCH_NO)
+FINAL = BATCH_SIZE + (BATCH_SIZE * BATCH_NO)
+
+cf.candlestick_reader(path_input=PATH_INPUT,
+                      img_input=IMG_INPUT[INITIAL:FINAL],
+                      csv_input=CSV_INPUT,
+                      excluded_time=excluded_time,
+                      name="XAUUSD",
+                      path_output=PATH_OUTPUT)

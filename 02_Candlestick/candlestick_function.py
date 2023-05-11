@@ -52,7 +52,7 @@ def highlight_candlestick(img_list: list) -> dict:
     # Sort CANDLESTICK_POLYMERASE keys
     CANDLESTICK_POLYMERASE = ({k: v for k, v in sorted(
         CANDLESTICK_POLYMERASE.items(), key=lambda item: item[0])})
-    
+
     return CANDLESTICK_POLYMERASE
 
 
@@ -135,7 +135,7 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetim
 
 def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict) -> dict:
     """Calibrate candlesitck value by calculate pixels to price"""
-    
+ 
     # Get non-calibrated price from candlestick
     non_calibrated_value = candlestick[calibrated_candlestick_values["calibrated_time"].to_pydatetime()]
     candle_price_per_pixel = abs(calibrated_candlestick_values["calibrated_open"] - calibrated_candlestick_values["calibrated_close"]) / \
@@ -170,8 +170,27 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
 
     return candlestick
 
-def candlestick_reader(path_input: str, img_input: list, csv_input: str, excluded_time: list) -> dict:
-    """Read candlestick chart image and return csv file of price values"""
+def candlestick_reader(path_input: str,
+                       img_input: list,
+                       csv_input: str,
+                       excluded_time: list,
+                       name: str,
+                       path_output: str) -> dict:
+    """Read candlestick chart image and return csv file of price values
+
+    Args:
+        path_input (str): path of image folder
+        img_input (list): list of input image file names
+        csv_input (str): path to csv input file path
+        excluded_time (list): list of holidays or other excluded time
+        name (str): prefix of filename ({name}_{initial_date}_{final_date})
+        path_output (str): path for output csv files
+        
+    Returns:
+        csv file (.csv): column name: [
+            index,date,time,currency,impact,event,actual,forecast,previous
+        ]
+    """
     
     print("----------INITIATING----------")
     CSV = pd.read_csv(csv_input)
@@ -191,10 +210,10 @@ def candlestick_reader(path_input: str, img_input: list, csv_input: str, exclude
     CSV.iloc[:, 1] = pd.to_datetime(CSV.iloc[:, 1], format="%Y-%m-%d-%H") # Last-time
     CSV.iloc[:, 2] = pd.to_datetime(CSV.iloc[:, 2], format="%Y-%m-%d-%H") # Calibrated-time
 
-    candlestick_dfs = {} # {img_file: pd.DataFrame}
+    DFS_CANDLESTICK = {} # {img_file: pd.DataFrame}
     
-    for count, img_file in enumerate(img_input):
-        print("Image {0} is processed".format(img_file) )
+    for count, img_file in enumerate(sorted(img_input)):
+        print(f"Processing Image {img_file}")
         # load the image and convert into list
         IMG = Image.open(str(path_input) + str(img_file))
         IMG_LIST = np.asarray(IMG).tolist()
@@ -219,8 +238,23 @@ def candlestick_reader(path_input: str, img_input: list, csv_input: str, exclude
         # Convert into pd.DataFrame
         DF_CANDLESTICK = pd.DataFrame(CALIBRATED_CANDLESTICK).transpose().reset_index().rename(columns = {'index':'time'})
         
+        # Convert dt.datetime to string
+        DF_CANDLESTICK.time = DF_CANDLESTICK.time.dt.strftime('%d-%b-%Y, %H:%M:%S')
+
         # Store in dictionary
-        candlestick_dfs[img_file] = DF_CANDLESTICK
-        print("{0} candlesticks is read from {1}".format(len(CANDLESTICK), img_file))
+        DFS_CANDLESTICK[img_file] = DF_CANDLESTICK
+        print(f"{len(CANDLESTICK)} candlesticks is read from {img_file}")
+
+    # Merge all DataFrames
+    print("Merge and export files")
+    DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values()).drop_duplicates(subset=['time'], keep='first')
+
+    # Export csv file
+    NAME_DATE = DF_MERGE_CANDLESTICK.iloc[0,0].split(',')[0] + '_' + DF_MERGE_CANDLESTICK.iloc[-1,0].split(',')[0]
+    DF_MERGE_CANDLESTICK.to_csv((path_output + name + '_' + NAME_DATE + '.csv'), 
+                          sep=',', 
+                          encoding='utf-8')
     
-    return candlestick_dfs
+    print(f"{len(DF_MERGE_CANDLESTICK)} candlesticks is exported")
+    print("----------COMPLETED-----------")
+    return DFS_CANDLESTICK
