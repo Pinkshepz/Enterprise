@@ -19,15 +19,9 @@
         candlestick_close = float
 """
 
-# Import fundamental libraries
+# Import libraries
 import os
-
-# Import datasci libraries
 import datetime as dt
-import numpy as np
-import pandas as pd
-from PIL import Image
-
 import candlestick_function
 
 # Read input file
@@ -35,6 +29,7 @@ import candlestick_function
 # PATH_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//image//"
 PATH_INPUT = "/workspaces/Enterprise/02_Candlestick/input/image/"
 IMG_INPUT = sorted(next(os.walk(PATH_INPUT), (None, None, []))[2])
+
 # CSV Tabular
 # CSV_INPUT = "c://Users//Art//Documents//A1-AspirePC//CS Project//07_Enterprise//Enterprise//02_Candlestick//input//candlestick_parameters.csv"
 CSV_INPUT = "/workspaces/Enterprise/02_Candlestick/input/candlestick_parameters.csv"
