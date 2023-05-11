@@ -243,11 +243,11 @@ def candlestick_reader(path_input: str,
 
         # Store in dictionary
         DFS_CANDLESTICK[img_file] = DF_CANDLESTICK
-        print(f"{len(CANDLESTICK)} candlesticks is read from {img_file}")
+        print(f"{len(CANDLESTICK)} candlesticks fetched")
 
     # Merge all DataFrames
     print("Merge and export files")
-    DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values()).drop_duplicates(subset=['time'], keep='first')
+    DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values()).drop_duplicates(subset=['time'], keep='first').reset_index(drop=True)
 
     # Export csv file
     NAME_DATE = DF_MERGE_CANDLESTICK.iloc[0,0].split(',')[0] + '_' + DF_MERGE_CANDLESTICK.iloc[-1,0].split(',')[0]
@@ -255,6 +255,6 @@ def candlestick_reader(path_input: str,
                           sep=',', 
                           encoding='utf-8')
     
-    print(f"{len(DF_MERGE_CANDLESTICK)} candlesticks is exported")
+    print(f"{len(DF_MERGE_CANDLESTICK)} candlesticks are successfully exported")
     print("----------COMPLETED-----------")
     return DFS_CANDLESTICK
