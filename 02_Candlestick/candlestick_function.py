@@ -129,13 +129,13 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetim
                 position += 1
             candle_time = next_datetime(candle_time)
         position += 1
-    
+
     return CANDLESTICK
 
 
 def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict) -> dict:
     """Calibrate candlesitck value by calculate pixels to price"""
- 
+
     # Get non-calibrated price from candlestick
     non_calibrated_value = candlestick[calibrated_candlestick_values["calibrated_time"].to_pydatetime()]
     candle_price_per_pixel = abs(calibrated_candlestick_values["calibrated_open"] - calibrated_candlestick_values["calibrated_close"]) / \
@@ -172,6 +172,7 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
 
 def candlestick_reader(path_input: str,
                        img_input: list,
+                       batch_input: tuple,
                        csv_input: str,
                        excluded_time: list,
                        name: str,
@@ -181,6 +182,7 @@ def candlestick_reader(path_input: str,
     Args:
         path_input (str): path of image folder
         img_input (list): list of input image file names
+        batch_input (tuple): tuple of image file slicing
         csv_input (str): path to csv input file path
         excluded_time (list): list of holidays or other excluded time
         name (str): prefix of filename ({name}_{initial_date}_{final_date})
@@ -193,6 +195,11 @@ def candlestick_reader(path_input: str,
     """
     
     print("----------INITIATING----------")
+    # Adjust batch size not larger than existing input
+    if batch_input[1] > len(img_input):
+        batch_input[1] = len(img_input)
+
+    img_input = img_input[batch_input[0]:batch_input[1]]
     CSV = pd.read_csv(csv_input)
     
     # Check image - CSV compatibility
@@ -212,9 +219,10 @@ def candlestick_reader(path_input: str,
 
     DFS_CANDLESTICK = {} # {img_file: pd.DataFrame}
     
-    for count, img_file in enumerate(sorted(img_input)):
+    for count, img_file in enumerate(sorted(img_input), start=batch_input[0]):
         print(f"Processing Image {img_file}")
-        # load the image and convert into list
+
+        # Load the image and convert into list
         IMG = Image.open(str(path_input) + str(img_file))
         IMG_LIST = np.asarray(IMG).tolist()
 
@@ -257,4 +265,5 @@ def candlestick_reader(path_input: str,
     
     print(f"{len(DF_MERGE_CANDLESTICK)} candlesticks are successfully exported")
     print("----------COMPLETED-----------")
+
     return DFS_CANDLESTICK

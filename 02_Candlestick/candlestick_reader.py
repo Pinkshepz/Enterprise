@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-import candlestick_function as cf
+import candlestick_function
 
 # Read input file
 # Image
@@ -56,14 +56,17 @@ excluded_time = [
     dt.datetime(year=2022, month=4, day=16, hour=4),
 ]
 
+# Config batch size
 BATCH_SIZE = 5
-BATCH_NO = 0
+BATCH_NO = 2
 INITIAL = 0 + (BATCH_SIZE * BATCH_NO)
 FINAL = BATCH_SIZE + (BATCH_SIZE * BATCH_NO)
+BATCH_INPUT = INITIAL, FINAL
 
-cf.candlestick_reader(path_input=PATH_INPUT,
-                      img_input=IMG_INPUT[INITIAL:FINAL],
-                      csv_input=CSV_INPUT,
-                      excluded_time=excluded_time,
-                      name="XAUUSD",
-                      path_output=PATH_OUTPUT)
+candlestick_function.candlestick_reader(path_input=PATH_INPUT,
+                                        img_input=IMG_INPUT,
+                                        batch_input=BATCH_INPUT,
+                                        csv_input=CSV_INPUT,
+                                        excluded_time=excluded_time,
+                                        name="XAUUSD-1H",
+                                        path_output=PATH_OUTPUT)
