@@ -257,6 +257,9 @@ def candlestick_reader(path_input: str,
     print("Merge and export files")
     DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values()).drop_duplicates(subset=['time'], keep='first').reset_index(drop=True)
 
+    # Add %Change row
+    DF_MERGE_CANDLESTICK['%Change'] = round(100 * (DF_MERGE_CANDLESTICK['close'] - DF_MERGE_CANDLESTICK['open']) / DF_MERGE_CANDLESTICK['open'], 4)
+
     # Export csv file
     NAME_DATE = DF_MERGE_CANDLESTICK.iloc[0,0].split(',')[0] + '_' + DF_MERGE_CANDLESTICK.iloc[-1,0].split(',')[0]
     DF_MERGE_CANDLESTICK.to_csv((path_output + name + '_' + NAME_DATE + '.csv'), 

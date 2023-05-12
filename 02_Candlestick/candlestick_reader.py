@@ -53,7 +53,7 @@ excluded_time = [
 
 # Config batch size
 BATCH_SIZE = 5
-BATCH_NO = 2
+BATCH_NO = 3
 INITIAL = 0 + (BATCH_SIZE * BATCH_NO)
 FINAL = BATCH_SIZE + (BATCH_SIZE * BATCH_NO)
 BATCH_INPUT = INITIAL, FINAL
