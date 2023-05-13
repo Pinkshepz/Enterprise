@@ -13,15 +13,16 @@ import pandas as pd
 import datetime as dt
 from PIL import Image
 
+
 def highlight_candlestick(img_list: list) -> dict:
     """Recognize bull and bear candlestick
         Bull -> R - G < -10 & R + G > 200 -> +1
         Bear -> R + G > 10 & R + G > 200 -> -1
         Store [count of +1/-1 score, lowest point that contain +1/-1] of each column
-        
+
         Parameters:
         1. img_list = 3D list of image pixels (jpeg: rgb, png: rgba)
-        
+
         Output:
         1. CANDLESTICK POLYMERASE = dict(pixel no. horizontally: 
             count of +1/-1 score, 
@@ -58,12 +59,12 @@ def highlight_candlestick(img_list: list) -> dict:
 
 def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetime, excluded_time: list) -> dict:
     """Interpret candlestick pixel value (open, high, low, close)
-    
+
     Parameters:
     1. candlestick_polymerase = dict(pixel no. horizontally: 
         count of +1/-1 score, 
         lowest point that contain +1/-1 of each column)
-    
+
     Output:
     1. CANDLESTICK = dict(date (datetime64: YY MM DD HH mm):
         open: float,
@@ -76,14 +77,14 @@ def interpret_candlestick(candlestick_polymerase: dict, initial_time: dt.datetim
 
     # Manage datetime
     # datetime(year, month, day, hour, minute, second)
-    delta_time = dt.timedelta(hours=1)
+    DELTA_TIME = dt.timedelta(hours=1)
 
-    def next_datetime(time: dt.datetime, excluded_time=excluded_time, dt=delta_time):
+    def next_datetime(time: dt.datetime, excluded_time=excluded_time, dt=DELTA_TIME):
         """Forward candlestick time"""
         while True:
             time += dt
             if time in excluded_time:
-                time += dt
+                continue
             # XAU market close -> [SAT 05.00 - MON 04.00]
             if (time.weekday() in [1, 2, 3, 4]) | ((time.weekday() == 5) & (time.hour < 5)) | ((time.weekday() == 0) & (time.hour > 4)):
                 break
@@ -137,17 +138,13 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
     """Calibrate candlesitck value by calculate pixels to price"""
 
     # Get non-calibrated price from candlestick
-    non_calibrated_value = candlestick[calibrated_candlestick_values["calibrated_time"].to_pydatetime()]
+    non_calibrated_value = candlestick[calibrated_candlestick_values["calibrated_time"].to_pydatetime(
+    )]
     candle_price_per_pixel = abs(calibrated_candlestick_values["calibrated_open"] - calibrated_candlestick_values["calibrated_close"]) / \
         abs(non_calibrated_value["open"] - non_calibrated_value["close"])
     wick_price_per_pixel = abs(calibrated_candlestick_values["calibrated_high"] - calibrated_candlestick_values["calibrated_low"]) / \
         abs(non_calibrated_value["high"] - non_calibrated_value["low"])
     price_per_pixel = (candle_price_per_pixel + wick_price_per_pixel) / 2
-    
-    # Error should be less than 1%
-    error = abs(candle_price_per_pixel - wick_price_per_pixel) * 100 / candle_price_per_pixel
-    if error > 1:
-        return [error, candle_price_per_pixel, wick_price_per_pixel, candlestick]
 
     # Calculate price
     def calibrate_price(pixel: float,
@@ -168,7 +165,14 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
         candlestick[candlestick_date]["close"] = round(
             calibrate_price(candlestick[candlestick_date]["close"]), 2)
 
-    return candlestick
+    # Error should be less than 1%
+    error = abs(candle_price_per_pixel - wick_price_per_pixel) * \
+        100 / candle_price_per_pixel
+    if error > 1:
+        return (candlestick, (error, candle_price_per_pixel, wick_price_per_pixel))
+    
+    return (candlestick, None)
+
 
 def candlestick_reader(path_input: str,
                        img_input: list,
@@ -187,13 +191,13 @@ def candlestick_reader(path_input: str,
         excluded_time (list): list of holidays or other excluded time
         name (str): prefix of filename ({name}_{initial_date}_{final_date})
         path_output (str): path for output csv files
-        
+
     Returns:
         csv file (.csv): column name: [
             index,date,time,currency,impact,event,actual,forecast,previous
         ]
     """
-    
+
     print("----------INITIATING----------")
     # Adjust batch size not larger than existing input
     if batch_input[1] > len(img_input):
@@ -201,24 +205,29 @@ def candlestick_reader(path_input: str,
 
     img_input = img_input[batch_input[0]:batch_input[1]]
     CSV = pd.read_csv(csv_input)
-    
+
     # Check image - CSV compatibility
     if (CSV.shape == 0) | (len(img_input) == 0):
         print("Error: CSV or image input are empty")
-        return 1      
+        return 1
     if CSV.shape == len(img_input):
         print("Error: Image files number are not equal to csv data")
         return 2
-    
-    print("There are {0} images to process".format(len(img_input)))
-    
-    # Format datetime CSV dataframe
-    CSV.iloc[:, 0] = pd.to_datetime(CSV.iloc[:, 0], format="%Y-%m-%d-%H") # First-time
-    CSV.iloc[:, 1] = pd.to_datetime(CSV.iloc[:, 1], format="%Y-%m-%d-%H") # Last-time
-    CSV.iloc[:, 2] = pd.to_datetime(CSV.iloc[:, 2], format="%Y-%m-%d-%H") # Calibrated-time
 
-    DFS_CANDLESTICK = {} # {img_file: pd.DataFrame}
-    
+    print(f"There are {len(img_input)} images to process")
+    print(*sorted(img_input))
+    print("..............................")
+
+    # Format datetime CSV dataframe
+    CSV.iloc[:, 0] = pd.to_datetime(
+        CSV.iloc[:, 0], format="%Y-%m-%d-%H")  # First-time
+    CSV.iloc[:, 1] = pd.to_datetime(
+        CSV.iloc[:, 1], format="%Y-%m-%d-%H")  # Last-time
+    CSV.iloc[:, 2] = pd.to_datetime(
+        CSV.iloc[:, 2], format="%Y-%m-%d-%H")  # Calibrated-time
+
+    DFS_CANDLESTICK = {}  # {img_file: pd.DataFrame}
+
     for count, img_file in enumerate(sorted(img_input), start=batch_input[0]):
         print(f"Processing Image {img_file}")
 
@@ -227,45 +236,52 @@ def candlestick_reader(path_input: str,
         IMG_LIST = np.asarray(IMG).tolist()
 
         CANDLESTICK_POLYMERASE = highlight_candlestick(IMG_LIST)
-        CANDLESTICK = interpret_candlestick(CANDLESTICK_POLYMERASE, CSV.iloc[count, 0], excluded_time)
+        CANDLESTICK = interpret_candlestick(
+            CANDLESTICK_POLYMERASE, CSV.iloc[count, 0], excluded_time)
+        
         # Check last candlestick
         if list(CANDLESTICK.keys())[-1] != CSV.iloc[count, 1]:
             print("Error: Last candlestick date ({0} to {1}) is not corresponded to CSV ({2})".format(
                 list(CANDLESTICK.keys())[0],
                 list(CANDLESTICK.keys())[-1],
                 CSV.iloc[count, 1]))
-            return 3
-        CALIBRATED_CANDLESTICK = calibrate_candlestick(CANDLESTICK, CSV.iloc[count, 2:])
+
+        CALIBRATED_CANDLESTICK = calibrate_candlestick(
+            CANDLESTICK, CSV.iloc[count, 2:])
+        
         # Check calibrate accuracy
-        if type(CALIBRATED_CANDLESTICK) != type({}):
+        if CALIBRATED_CANDLESTICK[-1] != None:
             print("Error: Fail to calibrate due to high error at {0}% > 0.5% at file {1}. Ref: {2}".format(
-                CALIBRATED_CANDLESTICK[0], img_file, CALIBRATED_CANDLESTICK[1:]))
-            print(CALIBRATED_CANDLESTICK)
-            return 4
-        
+                CALIBRATED_CANDLESTICK[-1][0], img_file, CALIBRATED_CANDLESTICK[-1][1:]))
+
         # Convert into pd.DataFrame
-        DF_CANDLESTICK = pd.DataFrame(CALIBRATED_CANDLESTICK).transpose().reset_index().rename(columns = {'index':'time'})
-        
+        DF_CANDLESTICK = pd.DataFrame(CALIBRATED_CANDLESTICK[0]).transpose(
+        ).reset_index().rename(columns={'index': 'time'})
+
         # Convert dt.datetime to string
-        DF_CANDLESTICK.time = DF_CANDLESTICK.time.dt.strftime('%d-%b-%Y, %H:%M:%S')
+        DF_CANDLESTICK.time = DF_CANDLESTICK.time.dt.strftime(
+            '%d-%b-%Y, %H:%M:%S')
 
         # Store in dictionary
         DFS_CANDLESTICK[img_file] = DF_CANDLESTICK
         print(f"{len(CANDLESTICK)} candlesticks fetched")
+        print("..............................")
 
     # Merge all DataFrames
     print("Merge and export files")
-    DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values()).drop_duplicates(subset=['time'], keep='first').reset_index(drop=True)
+    DF_MERGE_CANDLESTICK = pd.concat(df for df in DFS_CANDLESTICK.values(
+    )).drop_duplicates(subset=['time'], keep='first').reset_index(drop=True)
 
     # Add %Change row
-    DF_MERGE_CANDLESTICK['%Change'] = round(100 * (DF_MERGE_CANDLESTICK['close'] - DF_MERGE_CANDLESTICK['open']) / DF_MERGE_CANDLESTICK['open'], 4)
+    DF_MERGE_CANDLESTICK['%Change'] = round(
+        100 * (DF_MERGE_CANDLESTICK['close'] - DF_MERGE_CANDLESTICK['open']) / DF_MERGE_CANDLESTICK['open'], 4)
 
     # Export csv file
-    NAME_DATE = DF_MERGE_CANDLESTICK.iloc[0,0].split(',')[0] + '_' + DF_MERGE_CANDLESTICK.iloc[-1,0].split(',')[0]
-    DF_MERGE_CANDLESTICK.to_csv((path_output + name + '_' + NAME_DATE + '.csv'), 
-                          sep=',', 
-                          encoding='utf-8')
-    
+    NAME_DATE = CSV.iloc[batch_input[0], 0].strftime("%y%m%d") + '_' + CSV.iloc[batch_input[1] - 1, 1].strftime("%y%m%d")
+    DF_MERGE_CANDLESTICK.to_csv((path_output + name + '_' + NAME_DATE + '.csv'),
+                                sep=',',
+                                encoding='utf-8')
+
     print(f"{len(DF_MERGE_CANDLESTICK)} candlesticks are successfully exported")
     print("----------COMPLETED-----------")
 

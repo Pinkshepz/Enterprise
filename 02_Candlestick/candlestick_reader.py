@@ -49,6 +49,13 @@ excluded_time = [
     dt.datetime(year=2022, month=4, day=16, hour=1),
     dt.datetime(year=2022, month=4, day=16, hour=3),
     dt.datetime(year=2022, month=4, day=16, hour=4),
+    dt.datetime(year=2022, month=4, day=30, hour=4),
+    dt.datetime(year=2022, month=5, day=14, hour=4),
+    dt.datetime(year=2022, month=5, day=28, hour=4),
+    dt.datetime(year=2022, month=5, day=31, hour=3),
+    dt.datetime(year=2022, month=5, day=31, hour=4),
+    dt.datetime(year=2022, month=7, day=5, hour=2),
+    dt.datetime(year=2022, month=7, day=30, hour=4),
 ]
 
 # Config batch size
