@@ -56,14 +56,61 @@ excluded_time = [
     dt.datetime(year=2022, month=5, day=31, hour=4),
     dt.datetime(year=2022, month=7, day=5, hour=2),
     dt.datetime(year=2022, month=7, day=30, hour=4),
+    dt.datetime(year=2022, month=11, day=28, hour=5),
+    dt.datetime(year=2022, month=12, day=26, hour=9),
+    dt.datetime(year=2022, month=12, day=26, hour=13),
+    dt.datetime(year=2022, month=12, day=26, hour=16),
+    dt.datetime(year=2022, month=12, day=26, hour=17),
+    dt.datetime(year=2022, month=12, day=26, hour=19),
+    dt.datetime(year=2022, month=12, day=26, hour=20),
+    dt.datetime(year=2022, month=12, day=26, hour=21),
+    dt.datetime(year=2022, month=12, day=26, hour=22),
+    dt.datetime(year=2022, month=12, day=27, hour=0),
+    dt.datetime(year=2022, month=12, day=27, hour=2),
+    dt.datetime(year=2022, month=12, day=27, hour=3),
+    dt.datetime(year=2023, month=1, day=2, hour=7),
+    dt.datetime(year=2023, month=1, day=2, hour=9),
+    dt.datetime(year=2023, month=1, day=2, hour=13),
+    dt.datetime(year=2023, month=1, day=2, hour=17),
+    dt.datetime(year=2023, month=1, day=2, hour=19),
+    dt.datetime(year=2023, month=1, day=2, hour=20),
+    dt.datetime(year=2023, month=1, day=2, hour=23),
+    dt.datetime(year=2023, month=1, day=3, hour=0),
+    dt.datetime(year=2023, month=1, day=3, hour=2),
+    dt.datetime(year=2023, month=1, day=3, hour=3),
+    dt.datetime(year=2023, month=1, day=3, hour=4),
+    dt.datetime(year=2023, month=2, day=21, hour=3),
+    dt.datetime(year=2023, month=2, day=21, hour=4),
+    dt.datetime(year=2023, month=2, day=21, hour=5),
+    dt.datetime(year=2023, month=4, day=1, hour=4),
+    dt.datetime(year=2023, month=4, day=7, hour=5),
+    dt.datetime(year=2023, month=4, day=7, hour=6),
+    dt.datetime(year=2023, month=4, day=7, hour=7),
+    dt.datetime(year=2023, month=4, day=7, hour=8),
+    dt.datetime(year=2023, month=4, day=7, hour=9),
+    dt.datetime(year=2023, month=4, day=7, hour=10),
+    dt.datetime(year=2023, month=4, day=7, hour=13),
+    dt.datetime(year=2023, month=4, day=7, hour=14),
+    dt.datetime(year=2023, month=4, day=7, hour=15),
+    dt.datetime(year=2023, month=4, day=7, hour=16),
+    dt.datetime(year=2023, month=4, day=7, hour=17),
+    dt.datetime(year=2023, month=4, day=7, hour=18),
+    dt.datetime(year=2023, month=4, day=7, hour=20),
+    dt.datetime(year=2023, month=4, day=7, hour=21),
+    dt.datetime(year=2023, month=4, day=7, hour=22),
+    dt.datetime(year=2023, month=4, day=7, hour=23),
+    dt.datetime(year=2023, month=4, day=8, hour=0),
+    dt.datetime(year=2023, month=4, day=8, hour=1),
+    dt.datetime(year=2023, month=4, day=8, hour=2),
+    dt.datetime(year=2023, month=4, day=8, hour=3),
 ]
 
 # Config batch size
-BATCH_SIZE = 5
-BATCH_NO = 3
+BATCH_SIZE = 100
+BATCH_NO = 0
 INITIAL = 0 + (BATCH_SIZE * BATCH_NO)
 FINAL = BATCH_SIZE + (BATCH_SIZE * BATCH_NO)
-BATCH_INPUT = INITIAL, FINAL
+BATCH_INPUT = [INITIAL, FINAL]
 
 candlestick_function.candlestick_reader(path_input=PATH_INPUT,
                                         img_input=IMG_INPUT,
