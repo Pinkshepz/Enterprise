@@ -7,6 +7,7 @@
     4. candlestick_reader(path_input: str, img_input: list, csv_input: str) -> dict
     
 """
+
 # Import libraries
 import numpy as np
 import pandas as pd
@@ -170,7 +171,7 @@ def calibrate_candlestick(candlestick: dict, calibrated_candlestick_values: dict
         100 / candle_price_per_pixel
     if error > 1:
         return (candlestick, (error, candle_price_per_pixel, wick_price_per_pixel))
-    
+
     return (candlestick, None)
 
 

@@ -6,7 +6,8 @@ import datetime as dt
 import pandas as pd
 from numpy import arange
 from bs4 import BeautifulSoup
-from selenium import webdriver
+# from selenium import webdriver
+import requests
 
 # Requests web elements
 headers = {
@@ -16,7 +17,7 @@ headers = {
 
 
 def handle_time(time: str) -> tuple:
-    """Change time format from 12-hour UTC-5 to 24-hour UTC+7
+    """Change time format from 12-hour UTC+8 to 24-hour UTC+7
 
     Args:
         time (str): Time i.e. 8.00pm
@@ -28,9 +29,11 @@ def handle_time(time: str) -> tuple:
     if ":" not in time or time == " ":
         return time, 0
     elif str(time.split(":")[1][-2:]) == "am":
-        return str(int(time.split(":")[0]) + 12) + ":" + str(time.split(":")[1][:-2]), 0
+        if int(time.split(":")[0]) - 1 < 0:
+            return int(time.split(":")[0]) + 23, -1
+        return str(int(time.split(":")[0]) - 1) + ":" + str(time.split(":")[1][:-2]), 0
     else:
-        return str(time.split(":")[0]) + ":" + str(time.split(":")[1][:-2]), 1
+        return str(int(time.split(":")[0]) + 11) + ":" + str(time.split(":")[1][:-2]), 0
 
 
 def scrapper(date: str) -> list():  # Date format: mmmd.yyyy
@@ -47,20 +50,20 @@ def scrapper(date: str) -> list():  # Date format: mmmd.yyyy
 
     fdate = date.strftime("%b").lower() + date.strftime("%d").lstrip("0") + date.strftime(".%Y")
     url = "https://www.forexfactory.com/calendar?day=" + fdate
-    # response = requests.get(
-    #     url,
-    #     timeout=1000,
-    #     headers=headers)
-    # html = response.text
+    response = requests.get(
+        url,
+        timeout=1000,
+        headers=headers)
+    html = response.text
     
-    dr = webdriver.Chrome()
-    dr.get(url)
+    # dr = webdriver.Chrome()
+    # dr.get(url)
 
-    soup = BeautifulSoup(dr.page_source.encode("utf-8"), "html.parser")
+    # soup = BeautifulSoup(dr.page_source.encode("utf-8"), "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
     # Economic data are stored in <tr class='calendar_row'>{data}</tr> tag
-    print(url, soup)
-    table_rows = soup.find_all(class_="calendar__row")
+    table_rows = soup.find_all(class_="calendar_row")
 
     # 2D array storing all processed economic data
     array = []
@@ -74,37 +77,49 @@ def scrapper(date: str) -> list():  # Date format: mmmd.yyyy
             break
 
         columns = []
-        timesig = handle_time(row.find(class_="time").contents[-1].lstrip("\n"))
+        timesig = handle_time(row.find(class_="time").contents[1].contents[0].lstrip('\n'))
         columns.append((date + dt.timedelta(days=timesig[1])).strftime("%a, %d %b %y"))
         columns.append(timesig[0])
         columns.append(*row.find(class_="currency").stripped_strings)
         columns.append(
-            row.find(class_="impact").contents[1].contents[1]['class'][0])
+            row.find(class_="impact").contents[1].get('title').split(" ")[0])
         columns.append(
             row.find(class_="event").contents[1].contents[1].contents[0])
-        columns.append(row.find(class_="actual").string)
-        columns.append(row.find(class_="forecast").string)
-        if row.find(class_="previous").string is None:
-            if len(row.find(class_="previous").contents) != 0:
-                columns.append(
-                    row.find(class_="previous").contents[0].contents[0])
+        
+        if len(row.find(class_="actual").find_all('span')) > 0:
+            columns.append(row.find(class_="actual").find_all('span')[0].get_text())
+        else:
+            columns.append(None)
+
+        if len(row.find(class_="forecast").find_all('span')) > 0:
+            if row.find(class_="forecast").find_all('span')[0].contents[0] != '\xa0':
+                columns.append(row.find(class_="forecast").find_all('span')[0].contents[0])
             else:
                 columns.append(None)
         else:
-            columns.append(row.find(class_="previous").string)
+            columns.append(None)
 
+        if len(row.find(class_="previous").find_all('span')) > 0:
+            if len(row.find(class_="previous").find_all('span', class_='revised')) > 0:
+                columns.append(row.find(class_="previous").find_all('span', class_='revised')[0].contents[0])
+            elif '\xa0' in row.find(class_="previous").find_all('span')[0].contents[0]:
+                columns.append(None)
+            else:
+                columns.append(row.find(class_="previous").find_all('span')[0].contents[0].split(' ')[-5])
+        else:
+            columns.append(None)
+        
         array.append(columns)
 
     return array
 
 
-def forex_factory_scrapper(start_date: dt.datetime, end_date: dt.datetime, file_name: str) -> None:
+def forex_factory_scrapper(start_date: dt.datetime, end_date: dt.datetime) -> None:
     """Scrap financial data from FOREX factory website
 
     Args:
         start_date (dt.datetime): start date
         end_date (dt.datetime): end date
-        file_name (str): csv output file name
         
     Returns:
         csv file (.csv): column name: [
@@ -112,7 +127,7 @@ def forex_factory_scrapper(start_date: dt.datetime, end_date: dt.datetime, file_
         ]
     """
 
-    DAYS = (start_date - end_date).days
+    DAYS = (end_date - start_date).days
     
     # Check interval is lesser than 10000
     LIMIT_DAYS = 9999
@@ -130,21 +145,27 @@ def forex_factory_scrapper(start_date: dt.datetime, end_date: dt.datetime, file_
     
     # Loop scrap data of each day
     for step in arange(1, DAYS):
-        DATE = start_date - dt.timedelta(days=int(step)-1)
-        FETCH_DATA.extend(scrapper(DATE))
+        DATE = start_date + dt.timedelta(days=int(step)-1)
+        SCRAP = scrapper(DATE)
+        FETCH_DATA.extend(SCRAP)
         
         # Print log
-        print(f'{step:04}  {DATE.strftime("%b %d %Y")}  {str(len(FETCH_DATA))}')
+        print(f'{step:04}  {DATE.strftime("%b %d %Y")}  {str(len(SCRAP))}')
 
     # Convert to pd.DataFrame with some cleaning
     HEADER = ['date', 'time', 'currency', 'impact', 'event', 'actual', 'forecast', 'previous']
     DF_DATA = pd.DataFrame(FETCH_DATA, columns=HEADER)
-    DF_DATA['date'] = pd.to_datetime(DF_DATA['date'], infer_datetime_format=True)
+    DF_DATA['date'] = pd.to_datetime(DF_DATA['date'], format='%a, %d %b %y')
     DF_DATA.sort_values(by=['date'], inplace=True, ascending=False)
     DF_DATA.reset_index(inplace=True, drop=True)
 
+    print(DF_DATA)
+
     # Import to csv file
-    DF_DATA.to_csv(file_name, sep=',', encoding='utf-8')
+    FILE_NAME = 'FOREX_' + start_date.strftime("%y%m%d") + '_' + end_date.strftime("%y%m%d")
+    DF_DATA.to_csv('/workspaces/Enterprise/01_Scrapper/output/' + FILE_NAME + '.csv', 
+                   sep=',', 
+                   encoding='utf-8')
 
     # Print log
     print('SUCCESSFULLY FETCH DATA')
