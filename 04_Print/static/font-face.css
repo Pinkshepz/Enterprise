@@ -1,0 +1,54 @@
+/* Import Google Fonts => Font-face for chrome (.woff file) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@900&display=swap');
+
+/* Font-face for ios (.ttf file) */
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Plus Jakarta Sans'), url('../assets/fonts/PlusJakartaSans-ExtraBold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-Bold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-SemiBold.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-Medium.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-Regular.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-Light.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PlusJakartaSans'), url('../assets/fonts/PlusJakartaSans-ExtraLight.ttf') format('truetype');
+}
