@@ -24,7 +24,6 @@ body {
     display: flex;
     width: var(--A4-X);
     height: var(--A4-Y);
-    border: black 1px solid;
 }
 
 .cover-text {
@@ -64,7 +63,7 @@ body {
 }
 
 .cover-text-lower-micro {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     font-weight: 200;
     font-size: 1rem;
 }
@@ -79,6 +78,7 @@ body {
 
 .cover-background > img {
     width: var(--A4-X);
+    height: calc(var(--A4-Y) - 1px);
 }
 
 .white-chip {
