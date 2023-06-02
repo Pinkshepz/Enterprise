@@ -14,8 +14,8 @@
 
 # Imports
 import datetime as dt
-import numpy as np
 import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.dates as mdates
@@ -37,7 +37,9 @@ C_BULL = "#51A299"
 C_BEAR = "#DD5E57"
 C_SLATE500 = '#64748B'
 
-# Configure plt rc params
+# Configure pandas and matplotlib settings
+pd.options.mode.chained_assignment = None  # default='warn'
+mpl.rcParams['grid.color'] = '#f0f0f0'
 plt.rcParams['figure.dpi'] = 300
 
 # Root path
@@ -57,8 +59,8 @@ def prepare_data(path_xauusd, path_forex):
     """
 
     # Read csv
-    df_xauusd = pd.read_csv(PATH_XAUUSD, parse_dates=['time']).drop(columns=['Unnamed: 0'])
-    df_forex = pd.read_csv(PATH_FOREX, parse_dates=[['date', 'time']]).drop(columns=['Unnamed: 0'])
+    df_xauusd = pd.read_csv(path_xauusd, parse_dates=['time']).drop(columns=['Unnamed: 0'])
+    df_forex = pd.read_csv(path_forex, parse_dates=[['date', 'time']]).drop(columns=['Unnamed: 0'])
 
     df_xauusd.rename(columns={'time': 'datetime'}, inplace=True)
     df_forex.rename(columns={'date_time': 'datetime'}, inplace=True)
@@ -120,7 +122,7 @@ def candlestick_chart(df_xauusd):
     """
 
     # create new DataFrame
-    fig, ax = plt.subplots(1, 1, figsize=(15, 5))
+    fig, ax = plt.subplots(1, 1, figsize=(12, 5))
 
     # create candlestick features
     ## 1. bullish-bearish color
@@ -161,7 +163,7 @@ def candlestick_chart(df_xauusd):
     ax.xaxis.grid(True, which='minor')
     ax.yaxis.grid(True)
 
-    ax.tick_params(axis="x", which="major", pad=0)
+    ax.tick_params(axis="x", which="major", pad=5)
 
     plt.xticks(**C_FONT)
     plt.xticks(minor=True, **C_FONT)
@@ -176,9 +178,10 @@ def candlestick_chart(df_xauusd):
     ax.set_axisbelow(True)
     ax.grid(True)
     
-    # Save figure
+    # Save and close figure
     f_name = f'{ROOT}candle_{df_xauusd.iloc[0, 0].strftime("%y_%U")}.png'
     plt.savefig(f_name)
+    plt.close()
 
     return 0
 
@@ -242,5 +245,6 @@ if __name__ == '__main__':
     for parse_df in tqdm(parse_xauusd):
         candlestick_chart(parse_df)
         count += 1
+        break
 
-    print("Successfully render {count} images...")
+    print(f"Successfully render {count} images...")

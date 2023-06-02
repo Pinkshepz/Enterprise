@@ -108,16 +108,45 @@ body {
 }
 
 .content-date {
-    margin-bottom: 2rem;
     font-weight: 700;
     font-size: 2rem;
 }
 
+.content-date-micro {
+    margin-bottom: 2rem;
+    font-weight: 400;
+    font-size: 1rem;
+    border-bottom: 1px gray solid;
+}
+
 .content-text {
     padding: var(--PAGE-PADDING);
+    display: flex;
+    flex-direction: column;
 }
 
 .content-text-h1 {
+    width: 100%;
     font-weight: 700;
     font-size: 1.5rem;
+}
+
+.content-chart {
+    width: 100%;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-chart-image {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    overflow: hidden;
+}
+
+.content-chart-image > img {
+    width: calc(var(--A4-X) + 10%);
 }
