@@ -15,8 +15,8 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
-
+# Index (main) page
 @app.route("/", methods=["GET"])
 def index():
     # Display data on index.html
-    return render_template("index.html", birthday_output=[None])
+    return render_template("index.html", content_pages=[1, 2, 3, 4, 5])

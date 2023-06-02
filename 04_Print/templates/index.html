@@ -9,28 +9,61 @@
     <link rel="stylesheet" href="/static/font-face.css">
 </head>
 <body>
-    <div class="pages">
+    <div class="document">
         <div class="cover">
-            <!-- <div class="cover-content">
-                <div class="cover-content-upper">
-                    07 | ENTERPRISE
+            <div class="page">
+                <div class="cover-text">
+                    <div class="cover-text-upper">
+                        <div class="white-chip">PROJECT 07 | ENTERPRISE</div>
+                        <div class="cover-text-upper-title">
+                            <div>Candlestick</div>
+                            <div>Factory</div>
+                        </div>
+                    </div>
+                    <div class="cover-text-lower">
+                        <div class="cover-text-lower-subtitle">
+                            XAUUSD TF-1D
+                        </div>
+                        <div class="cover-text-lower-p">
+                            Trading View ✕ Forex Factory
+                        </div>
+                        <div class="cover-text-lower-p">
+                            1 Jan 22 - 1 May 23
+                        </div>
+                        <div class="cover-text-lower-micro">
+                            Photo by David Billings on Unsplash
+                        </div>
+                    </div>
                 </div>
-                <div class="cover-content-lower">
-                    <div class="cover-content-title">
-                        XAUUSD
-                    </div>
-                    <div class="cover-content-p">
-                        <span class="white-chip">1D</span> 1 Jan 22 - 1 May 23
-                    </div>
+                <div class="cover-background">
+                    <img src="{{url_for('static', filename='image/cover.jpg')}}">
                 </div>
             </div>
-            <div class="cover-background">
-
-            </div> -->
         </div>
         <div class="content">
-            {% for birthday in birthday_output %}
-                a
+            {% for content_page in content_pages %}
+                <div class="page">
+                    <div class="content-wrapper">
+                        <div class="content-header">
+                            <div>PROJECT 07 | ENTERPRISE</div>
+                            <span>Page n</span>
+                        </div>
+                        <div class="content-text">
+                            <div class="content-date">1 JAN 2022</div>
+                            <div class="content-chart">
+                                <div class="content-text-h1">
+                                    Candlestick Chart
+                                </div>
+                            </div>
+                            <div class="content-table">
+                                <div class="content-text-h1">
+                                    Forex Factory
+                                </div>
+                            </div>
+                            <img src="../../04_Print/assets/cover.jpg" alt="image">
+                        </div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
     </div>
