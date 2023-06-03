@@ -163,18 +163,21 @@ def candlestick_chart(df_xauusd):
     ax.xaxis.grid(True, which='minor')
     ax.yaxis.grid(True)
 
-    ax.tick_params(axis="x", which="major", pad=5)
+    ax.tick_params(axis="x", which="major", pad=3.3)
+    ax.tick_params(axis=u'both', which=u'both',length=0)
 
-    plt.xticks(**C_FONT)
-    plt.xticks(minor=True, **C_FONT)
-    plt.yticks(**C_FONT)
+    plt.xticks(**C_FONT, color='#444')
+    plt.xticks(minor=True, color='#777', **C_FONT)
+    plt.yticks(**C_FONT,  color='#777')
 
-    ax.set_xlabel('Datetime (24H UTC+7)', **L_FONT)
-    ax.set_ylabel('Price (USD)', **L_FONT)
+    # ax.set_xlabel('Datetime (24H UTC+7)', **L_FONT)
+    # ax.set_ylabel('Price (USD)', **L_FONT)
 
     # Format spines and grid
+    ax.spines[['left']].set_visible(False)
     ax.spines[['right']].set_visible(False)
     ax.spines[['top']].set_visible(False)
+    ax.spines[['bottom']].set_visible(False)
     ax.set_axisbelow(True)
     ax.grid(True)
     
@@ -245,6 +248,5 @@ if __name__ == '__main__':
     for parse_df in tqdm(parse_xauusd):
         candlestick_chart(parse_df)
         count += 1
-        break
 
     print(f"Successfully render {count} images...")

@@ -24,6 +24,7 @@ body {
     display: flex;
     width: var(--A4-X);
     height: var(--A4-Y);
+    page-break-after: always;
 }
 
 .cover-text {
@@ -144,9 +145,8 @@ body {
     justify-content: center;
     align-items: center;
     align-self: center;
-    overflow: hidden;
 }
 
 .content-chart-image > img {
-    width: calc(var(--A4-X) + 10%);
+    width: calc(var(--A4-X) + 18%);
 }
