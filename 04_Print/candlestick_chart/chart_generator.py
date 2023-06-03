@@ -24,8 +24,8 @@ from tqdm import tqdm
 # Configure fonts
 FONT_PATH = "/workspaces/Enterprise/00_Pinksheepkit/fonts/poppins/Poppins-{0}.ttf"
 HEADING = "Bold"
-LABEL = "Regular"
-CONTENT = "Light"
+LABEL = "Medium"
+CONTENT = "Regular"
 
 # Font properties **kwargs -> usage: plt.some_method(**H_FONT)
 H_FONT = {"fontproperties": fm.FontProperties(fname=FONT_PATH.format(HEADING)), "size": 12}
@@ -36,6 +36,10 @@ C_FONT = {"fontproperties": fm.FontProperties(fname=FONT_PATH.format(CONTENT)), 
 C_BULL = "#51A299"
 C_BEAR = "#DD5E57"
 C_SLATE500 = '#64748B'
+
+C_LOW = "#EAB308"
+C_MEDIUM = "#F97316"
+C_HIGH = "#EF4444"
 
 # Configure pandas and matplotlib settings
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -61,6 +65,7 @@ def prepare_data(path_xauusd: str, path_forex: str) -> tuple:
     # Read csv
     df_xauusd = pd.read_csv(path_xauusd, parse_dates=['time']).drop(columns=['Unnamed: 0'])
     df_forex = pd.read_csv(path_forex, parse_dates=[['date', 'time']]).drop(columns=['Unnamed: 0'])
+    df_forex = df_forex[df_forex['currency'] == 'USD']
 
     df_xauusd.rename(columns={'time': 'datetime'}, inplace=True)
     df_forex.rename(columns={'date_time': 'datetime'}, inplace=True)
@@ -77,14 +82,17 @@ def prepare_data(path_xauusd: str, path_forex: str) -> tuple:
     df_forex['impact'] = df_forex['impact'].astype('category')
     df_forex['event'] = df_forex['event'].astype('category')
 
+    # Filter out impact: holiday
+    df_forex = df_forex[df_forex.impact != 'holiday']
+
     # Swap column order
-    df_forex = df_forex.reindex(columns=["datetime", "date", "time", "currency", "impact", "event"])
+    df_forex = df_forex.reindex(columns=["datetime", "date", "time", "impact", "event", "actual", "forecast", "previous"])
 
     return df_xauusd, df_forex
 
 
 # Function for plot candlestick chart
-def candlestick_chart(df_xauusd: pd.DataFrame) -> int:
+def candlestick_chart(df_xauusd: pd.DataFrame, df_forex: pd.DataFrame) -> int:
     """ Plot candlestick chart
 
     Args:
@@ -126,6 +134,11 @@ def candlestick_chart(df_xauusd: pd.DataFrame) -> int:
            bottom=df_xauusd['upper'], color=df_xauusd['bb'])
     ax.bar(df_xauusd.datetime, df_xauusd['w-'], width_wick,
            bottom=df_xauusd['bottom'], color=df_xauusd['bb'])
+    
+    # Mark FOREX news impact
+    impact_mapper_color = {'low': C_LOW, 'medium': C_MEDIUM, 'high': C_HIGH}
+    ax.scatter(df_forex.datetime, [min(df_xauusd.low) - 1] * df_forex.shape[0], marker='s',
+               s=20, c=df_forex.impact.map(impact_mapper_color), alpha=1)
 
     # Format ticks
     ax.xaxis.set_major_locator(mdates.DayLocator())
@@ -157,7 +170,7 @@ def candlestick_chart(df_xauusd: pd.DataFrame) -> int:
     
     # Save and close figure
     f_name = f'{ROOT}candle_{df_xauusd.iloc[0, 0].strftime("%y_%U")}.png'
-    plt.savefig(f_name)
+    plt.savefig(f_name, bbox_inches='tight')
     plt.close()
 
     return 0
@@ -170,13 +183,24 @@ def forex_html_csv(parse_forex: list) -> int:
 
     # Loop over list of pd.DataFrame
     for parse_df in parse_forex:
+        # Convert imapct to color code
+        impact_html_mapper = {
+            'low': f'<div class="square" style="background-color: {C_LOW};"></div>',
+            'medium': f'<div class="square" style="background-color: {C_MEDIUM};"></div>', 
+            'high': f'<div class="square" style="background-color: {C_HIGH};"></div>'}
+
+        parse_df.impact = parse_df.impact.map(impact_html_mapper)
+
+        # Rename columns
+        parse_df.columns = ["Datetime", "Date", "Time", "IMP", "Event", "Actual", "Fore", "Prev"]
+
         # Convert to html
-        html_forex = parse_df.to_html(index=False)
+        html_forex = parse_df.iloc[:, 1:].to_html(index=False, escape=False) # Exclude datetime column
 
         # Adjust HTML
-        html_forex = html_forex.replace('"', '')
-        html_forex = html_forex.replace(' border=1 class=dataframe', '')
-        html_forex = html_forex.replace(' style=text-align: right;', '')
+        # html_forex = html_forex.replace('"', '')
+        html_forex = html_forex.replace("border", "b")
+        html_forex = html_forex.replace("right", "left")
 
         parse_html_forex.append(html_forex)
 
@@ -225,7 +249,7 @@ def parse_data(df_xauusd: pd.DataFrame, df_forex: pd.DataFrame) -> list:
             df_xauusd[(df_xauusd.datetime >= week_start) & (df_xauusd.datetime < week_end)]
         )
         parse_forex.append(
-            df_forex[(df_forex.datetime >= week_start) & (df_forex.datetime < week_end)].iloc[:, 1:]
+            df_forex[(df_forex.datetime >= week_start) & (df_forex.datetime < week_end)]
         )
 
         # Increment week day interval
@@ -249,14 +273,11 @@ if __name__ == '__main__':
     parse_xauusd, parse_forex = parse_data(DF_XAUUSD, DF_FOREX)
 
     # Render candlestick chart
-    print("Rendering images...")
-    count = 0
-    for parse_df in tqdm(parse_xauusd):
-        candlestick_chart(parse_df)
-        count += 1
-        break
+    # print("Rendering images...")
+    # for parse_df_xauusd, parse_df_forex in tqdm(zip(parse_xauusd, parse_forex)):
+    #     candlestick_chart(parse_df_xauusd, parse_df_forex)
 
-    print(f"Successfully render {count} images...")
+    # print("Successfully render images...")
 
     # Parse HTML of FOREX tabular data
     print("Parsing HTML...")

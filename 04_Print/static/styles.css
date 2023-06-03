@@ -122,20 +122,21 @@ body {
 }
 
 .content-text {
-    padding: var(--PAGE-PADDING);
+    padding: calc(var(--PAGE-PADDING) / 2) var(--PAGE-PADDING);
     display: flex;
     flex-direction: column;
 }
 
 .content-text-h1 {
     width: 100%;
+    margin-bottom: 1rem;
     font-weight: 700;
     font-size: 1.5rem;
 }
 
 .content-chart {
     width: 100%;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     display: flex;
     flex-direction: column;
 }
@@ -146,8 +147,23 @@ body {
     justify-content: center;
     align-items: center;
     align-self: center;
+    /* overflow-x: unset;
+    overflow-y: hidden; */
 }
 
 .content-chart-image > img {
-    width: calc(var(--A4-X) + 18%);
+    width: 100%;
+}
+
+.content-table-table > table {
+    font-weight: 400;
+    font-size: 0.5rem;
+}
+
+.square {
+    display: flex;
+    width: 7px;
+    height: 7px;
+    border-radius: 100%;
+    margin: 3px 0;
 }
