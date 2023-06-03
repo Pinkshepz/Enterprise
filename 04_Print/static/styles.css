@@ -25,6 +25,7 @@ body {
     width: var(--A4-X);
     height: var(--A4-Y);
     page-break-after: always;
+    border: 1px solid gray;
 }
 
 .cover-text {

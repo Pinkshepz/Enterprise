@@ -46,7 +46,7 @@ plt.rcParams['figure.dpi'] = 300
 ROOT = '/workspaces/Enterprise/04_Print/static/data/'
 
 # Function for data preparation and cleaning to DataFrame
-def prepare_data(path_xauusd, path_forex):
+def prepare_data(path_xauusd: str, path_forex: str) -> tuple:
     """ Prepare and clean DataFrame 
 
     Args
@@ -70,47 +70,21 @@ def prepare_data(path_xauusd, path_forex):
         df_xauusd[col] = df_xauusd[col].astype('float64')
 
     # Change dataype of df_forex
-    df_forex["datetime"] = pd.to_datetime(df_xauusd["datetime"], format='%d-%b-%Y, %H:%M:%S')
+    df_forex["datetime"] = pd.to_datetime(df_xauusd["datetime"], format='%d-%b-%y %H:%M:%S')
+    df_forex["date"] = df_forex["datetime"].dt.strftime('%d %b')
+    df_forex["time"] = df_forex["datetime"].dt.strftime('%H:%M')
     df_forex['currency'] = df_forex['currency'].astype('category')
     df_forex['impact'] = df_forex['impact'].astype('category')
     df_forex['event'] = df_forex['event'].astype('category')
 
-    # Define function to handle various nember formats i.e. 100K 50%
-    def handle_number_format(number: str) -> list:
-        """ Separate value and unit of given number formats
-        
-        Arg:
-            1. number: str i.e. 6.5%, 100K, 2.8
-
-        Out:
-            1. list: <[float, str | None]> i.e. [6.5, "%"], [100, "K"], [2.8, None]
-        """
-
-        # case 1: na
-        if number == '':
-            return [None, None]
-        number = str(number)
-        # case 2: % value
-        if (number[-1] == '%') & (number.lstrip('-')[0].isnumeric() is True):
-            return [float(number.rstrip('%')), '%']
-        # case 3: 1K 1M 1B 1T unit
-        if (number[-1].isalpha() is True) & (number.lstrip('-')[0].isnumeric() is True):
-            return [float(str(number)[:-1]), number[-1]]
-        # case 4: ordinary numbers
-        if number.replace(',', '').replace('.', '').lstrip('-').isnumeric() is True:
-            return [float(number.replace(',', '')), None]
-        # case 5: non-numbers
-        return [number, None]
-
-    # Apply data format function
-    for col in df_forex.columns[5:]:
-        df_forex[col] = df_forex[col].fillna('').apply(handle_number_format)
+    # Swap column order
+    df_forex = df_forex.reindex(columns=["datetime", "date", "time", "currency", "impact", "event"])
 
     return df_xauusd, df_forex
 
 
 # Function for plot candlestick chart
-def candlestick_chart(df_xauusd):
+def candlestick_chart(df_xauusd: pd.DataFrame) -> int:
     """ Plot candlestick chart
 
     Args:
@@ -189,8 +163,32 @@ def candlestick_chart(df_xauusd):
     return 0
 
 
+# Function for exporting csv of forex html data table
+def forex_html_csv(parse_forex: list) -> int:
+    # List storing html of pd.DataFrame
+    parse_html_forex = []
+
+    # Loop over list of pd.DataFrame
+    for parse_df in parse_forex:
+        # Convert to html
+        html_forex = parse_df.to_html(index=False)
+
+        # Adjust HTML
+        html_forex = html_forex.replace('"', '')
+        html_forex = html_forex.replace(' border=1 class=dataframe', '')
+        html_forex = html_forex.replace(' style=text-align: right;', '')
+
+        parse_html_forex.append(html_forex)
+
+    # Export .csv file
+    f_name = f'{ROOT}forex_html.csv'
+    pd.Series(parse_html_forex).to_csv(f_name)
+
+    return 0
+
+
 # Function for parsing DataFrame weekly
-def parse_data(df_xauusd, df_forex):
+def parse_data(df_xauusd: pd.DataFrame, df_forex: pd.DataFrame) -> list:
     """ Parse xauusd and forex data weekly
 
     Args:
@@ -215,19 +213,26 @@ def parse_data(df_xauusd, df_forex):
 
     # List of weekly parsed data
     parse_xauusd = []
+    parse_forex = []
 
+    # Use datetime range form candlestick chart as primary source
+    # Left join (df_xauusd | df_forex)
+   
     # Loop parsing weekly
     while week_start < terminal_date:
         # Append parsed DataFrame
         parse_xauusd.append(
             df_xauusd[(df_xauusd.datetime >= week_start) & (df_xauusd.datetime < week_end)]
         )
+        parse_forex.append(
+            df_forex[(df_forex.datetime >= week_start) & (df_forex.datetime < week_end)].iloc[:, 1:]
+        )
 
         # Increment week day interval
         week_start += week_delta
         week_end += week_delta
     
-    return parse_xauusd
+    return parse_xauusd, parse_forex
 
 
 # Run this module
@@ -241,12 +246,20 @@ if __name__ == '__main__':
     DF_XAUUSD, DF_FOREX = prepare_data(PATH_XAUUSD, PATH_FOREX)
 
     # Parse date
-    parse_xauusd = parse_data(DF_XAUUSD, DF_FOREX)
+    parse_xauusd, parse_forex = parse_data(DF_XAUUSD, DF_FOREX)
 
+    # Render candlestick chart
     print("Rendering images...")
     count = 0
     for parse_df in tqdm(parse_xauusd):
         candlestick_chart(parse_df)
         count += 1
+        break
 
     print(f"Successfully render {count} images...")
+
+    # Parse HTML of FOREX tabular data
+    print("Parsing HTML...")
+    forex_html_csv(parse_forex)
+
+    print("Successfully parse html to csv")
