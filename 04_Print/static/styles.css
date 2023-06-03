@@ -24,8 +24,8 @@ body {
     display: flex;
     width: var(--A4-X);
     height: var(--A4-Y);
-    page-break-after: always;
     border: 1px solid gray;
+    /* overflow: hidden; */
 }
 
 .cover-text {
@@ -80,7 +80,7 @@ body {
 
 .cover-background > img {
     width: var(--A4-X);
-    height: calc(var(--A4-Y) - 1px);
+    height: calc(var(--A4-Y) - 3px);
 }
 
 .white-chip {
