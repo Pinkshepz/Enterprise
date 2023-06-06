@@ -24,7 +24,7 @@ body {
     display: flex;
     width: var(--A4-X);
     height: var(--A4-Y);
-    border: 1px solid gray;
+    /* border: 1px solid gray; */
     /* overflow: hidden; */
 }
 
@@ -80,7 +80,7 @@ body {
 
 .cover-background > img {
     width: var(--A4-X);
-    height: calc(var(--A4-Y) - 3px);
+    height: calc(var(--A4-Y) - 2px);
 }
 
 .white-chip {
@@ -110,15 +110,23 @@ body {
 }
 
 .content-date {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px gray solid;
+    margin-bottom: 1.5rem;
+}
+
+.content-date-title {
     font-weight: 700;
     font-size: 2rem;
 }
 
 .content-date-micro {
-    margin-bottom: 2rem;
     font-weight: 400;
     font-size: 1rem;
-    border-bottom: 1px gray solid;
+    margin-bottom: 0.2rem;
 }
 
 .content-text {
@@ -156,14 +164,55 @@ body {
 }
 
 .content-table-table > table {
-    font-weight: 400;
-    font-size: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    /* font-family: 'Courier New', Courier, monospace; */
+    font-weight: 300;
+    font-size: 0.6rem;
+}
+
+.content-table-table > table > thead > tr > th {
+    padding: 0;
+    font-weight: 300;
+    color: gray;
+    border-bottom: 0.25px lightgray solid;
+}
+
+.content-table-table > table > thead > tr > th:nth-child(5) {
+    text-align: end;
+}
+.content-table-table > table > thead > tr > th:nth-child(6) {
+    text-align: end;
+}
+.content-table-table > table > thead > tr > th:nth-child(7) {
+    text-align: end;
+}
+.content-table-table > table > thead > tr > th:nth-child(8) {
+    text-align: end;
+}
+
+.content-table-table > table > tbody > tr > td:nth-child(5) {
+    text-align: end;
+}
+.content-table-table > table > tbody > tr > td:nth-child(6) {
+    text-align: end;
+}
+.content-table-table > table > tbody > tr > td:nth-child(7) {
+    text-align: end;
+}
+.content-table-table > table > tbody > tr > td:nth-child(8) {
+    text-align: end;
+}
+
+td > .square {
+    text-align: center;
 }
 
 .square {
     display: flex;
-    width: 7px;
-    height: 7px;
-    border-radius: 100%;
-    margin: 3px 0;
+    align-items: center;
+    justify-content: center;
+    width: 7.5px;
+    height: 7.5px;
+    border-radius: 100px;
 }

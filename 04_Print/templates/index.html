@@ -47,27 +47,29 @@
                     <div class="content-wrapper">
                         <div class="content-header">
                             <div>PROJECT 07 | ENTERPRISE</div>
-                            <span>{{content_page[0] + 1}}</span>
+                            <span>{{content_page[0] + 2}}</span>
                         </div>
                         <div class="content-text">
                             <div class="content-date">
-                                {{content_page[1]['start_date']}} - {{content_page[1]['end_date']}}
-                            </div>
-                            <div class="content-date-micro">
-                                20{{content_page[1]['year']}} Week {{content_page[1]['week']}}
+                                <div class="content-date-title">
+                                    {{content_page[1]['start_date']}} - {{content_page[1]['end_date']}}
+                                </div>
+                                <div class="content-date-micro">
+                                    20{{content_page[1]['year']}} Week {{content_page[1]['week']}}
+                                </div>
                             </div>
                             <div class="content-chart">
-                                <div class="content-text-h1">
+                                <!-- <div class="content-text-h1">
                                     Candlestick Chart
-                                </div>
+                                </div> -->
                                 <div class="content-chart-image">
                                     <img src="{{url_for('static', filename='data/' + content_page[1]['candle'])}}">
                                 </div>
                             </div>
                             <div class="content-table">
-                                <div class="content-text-h1">
+                                <!-- <div class="content-text-h1">
                                     Forex Factory
-                                </div>
+                                </div> -->
                                 <div class="content-table-table">
                                     {{ content_page[1]['forex'] | safe }}
                                 </div>
